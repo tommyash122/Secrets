@@ -3,12 +3,30 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const ejs = require("ejs");
 const mongoose = require("mongoose");
-const encrypt = require("mongoose-encryption");
+const session = require("express-session");
+const passport = require("passport");
+const passportLocalMongoose = require("passport-local-mongoose");
+
 
 const app = express();
 
+////////// app use //////////
+app.use(express.static("public"));
+app.set('view engine', 'ejs');
+app.use(bodyParser.urlencoded({extended: true}));
 
-const mongodbSTR = "mongodb+srv://tommy122:8MBoprlxj1uLN6pm@cluster0.8v8heph.mongodb.net/userDB"
+app.use(session({
+    secret: "Our little secret.",
+    resave: false,
+    saveUninitialized: false
+}));
+
+app.use(passport.initialize());
+app.use(passport.session());
+
+mongoose.connect(process.env.MONGOSTR, {useNewUrlParser: true});
+
+
 
 const userSchema = new mongoose.Schema({
     email: String,
@@ -16,16 +34,7 @@ const userSchema = new mongoose.Schema({
 });
 
 
-userSchema.plugin(encrypt, {secret: process.env.SECRET, encryptedFields: ["password"]});
-
 const User = mongoose.model("User", userSchema);
-
-////////// app use //////////
-app.use(express.static("public"));
-app.set('view engine', 'ejs');
-app.use(bodyParser.urlencoded({extended: true}));
-
-mongoose.connect(mongodbSTR, {useNewUrlParser: true});
 
 
 ////////// app get //////////
@@ -43,31 +52,11 @@ app.get("/register", function (req, res) {
 
 ////////// app post //////////
 app.post("/register", function (req, res) {
-    const newUser = new User({
-        email: req.body.username,
-        password: req.body.password
-    });
-    newUser.save(function (err) {
-        if (!err)
-            res.render("secrets");
-        else
-            console.log(err);
-    });
+
 })
 
 app.post("/login", function (req, res) {
-    const userName = req.body.username;
-    const password = req.body.password;
 
-    User.findOne({email: userName}, function (err, foundUser) {
-        if (err)
-            console.log(err);
-        else {
-            if (foundUser)
-                if (foundUser.password === password)
-                    res.render("secrets");
-        }
-    })
 })
 
 
